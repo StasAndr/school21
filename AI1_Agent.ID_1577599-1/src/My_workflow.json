@@ -1,0 +1,165 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GigaChat/GigaChat-2-Max",
+          "mode": "list",
+          "cachedResultName": "GigaChat/GigaChat-2-Max"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        280,
+        80
+      ],
+      "id": "fa8ef48c-2be9-4823-b351-060ad5f2d504",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "e8eIcTzMn5uhsNvC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        120,
+        -120
+      ],
+      "id": "6533ff78-7601-447b-80c5-33a99e0a8d73",
+      "name": "Telegram Trigger",
+      "webhookId": "909d4af0-cd83-4ab2-9da7-12f7b15348de",
+      "credentials": {
+        "telegramApi": {
+          "id": "zlFUBxfpJ8gOhLfg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}\n",
+        "options": {
+          "systemMessage": "Ты — карьерный консультант в IT-сфере. Твоя задача — быстро помочь пользователю определить подходящее IT-направление через короткий опрос.\n\nДОСТУПНЫЕ НАПРАВЛЕНИЯ:\n- Frontend разработка\n- Backend разработка\n- Data Science\n- DevOps\n- Cybersecurity\n- Bioinformatics\n- QA (тестирование)\n- Business Systems Analyst (BSA)\n- Project Manager\n- UX/UI дизайн\n\nСТИЛЬ ОБЩЕНИЯ:\n- Пиши ПРОСТО и ПОНЯТНО, как обычный человек\n- Короткие предложения, без сложных конструкций\n- Дружелюбный тон, без официоза\n- НЕ используй сложные метафоры и витиеватые фразы\n\nКРИТИЧЕСКИ ВАЖНО:\n- ЗАПОМИНАЙ все ответы пользователя и НЕ спрашивай повторно\n- Если пользователь дал краткий ответ — принимай его и иди дальше\n- НЕ уточняй и НЕ переспрашивай\n- Задавай РОВНО 6 вопросов, не больше\n\nПЛАН ОПРОСА (задавай по порядку):\n\n**Вопрос 1:** \nСколько тебе лет, где живешь и какое у тебя образование или опыт работы?\n\n**Вопрос 2:** \nЧем увлекаешься в свободное время?\n\n**Вопрос 3 (про бассейн - ОБЯЗАТЕЛЬНЫЙ):**\nРасскажи про отборочный интенсив (бассейн):\n- Что изучал? (например: C, Git, Linux)\n- Как прошел? Что понравилось, что было сложно?\n- Какое место занял в своем трайбе или сколько времени проводил за практикой?\n\n**Вопрос 4:**\nЗачем хочешь в IT? Нужен быстрый результат или готов долго учиться?\n\n**Вопрос 5:**\nКакой формат работы предпочитаешь — удаленка или офис? Стартап или большая компания?\n\n**Вопрос 6:**\nЧто у тебя хорошо получается? И с чем бывают сложности?\n\nПРАВИЛА:\n- Задавай 1-2 вопроса за раз\n- После каждого ответа сразу переходи к следующему вопросу\n- НЕ добавляй лишних вопросов после шестого\n- Когда получишь ответы на все 6 вопросов — сразу давай рекомендацию\n\nФОРМАТ РЕКОМЕНДАЦИИ (пиши просто):\n\n**Твое направление:** [одно главное]\n\n**Почему:**\n- [конкретная причина из его ответов]\n- [конкретная причина из его ответов]\n- [конкретная причина из его ответов]\n\n**Альтернативы:** [1-2 других варианта]\n\nНачни с простого приветствия и первого вопроса, представься"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        400,
+        -120
+      ],
+      "id": "8c9fdf87-b8a1-4b97-a7c8-ee091b6a6271",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        -120
+      ],
+      "id": "cf56df4c-1e7d-410e-80d2-6ba38657c076",
+      "name": "Telegram",
+      "webhookId": "a12ea6b6-1593-4d3c-ace1-0ec6446de89c",
+      "credentials": {
+        "telegramApi": {
+          "id": "zlFUBxfpJ8gOhLfg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        500,
+        100
+      ],
+      "id": "ef913479-b2ec-424e-9b67-59ab103423d9",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "064d13f3-8d31-41fd-9f36-c534646f2a11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bb27eea2d6e6bda0d55b7ceddc9c371dd4c532bdd984c16936b18342a7cda51c"
+  },
+  "id": "VdtNMyb5K1Tje6o0",
+  "tags": []
+}

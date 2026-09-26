@@ -1,0 +1,321 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — AI-ассистент, который создаёт ежедневные дайджесты из постов Telegram-каналов.\n\nВХОДНЫЕ ДАННЫЕ:\nТы получишь JSON-массив с данными за день. Каждый элемент содержит:\n- date: дата дайджеста\n- channels: массив каналов с их постами\n- total_posts: общее количество постов\n- total_channels: количество каналов\n\nСтруктура канала:\n{\n  \"channel_name\": \"имя канала\",\n  \"channel_url\": \"https://t.me/channel\",\n  \"posts\": [массив постов]\n}\n\nТВОЯ ЗАДАЧА:\nСоздать дайджест в следующем формате:\n\n📊 **Дайджест за [дата в формате \"25 декабря 2025\"]**\n\n[Общее саммари в 1 абзаце (3-5 предложений):\n- Сколько всего постов и из скольких каналов\n- Главные темы дня (карьера, технологии, разработка и т.д.)\n- Выдели 1-2 самых интересных/актуальных поста]\n\n---\n\n**[Название канала]** — [количество] пост(ов)\n🔗 Канал: [ссылка на канал]\n\n1. [Краткое описание поста в 1-2 предложениях — суть и ключевая мысль]\n   🔗 [ссылка на пост]\n\n2. [Следующий пост]\n   🔗 [ссылка]\n\n---\n\n**[Следующий канал]** — [количество] пост(ов)\n🔗 Канал: [ссылка на канал]\n\n[аналогично]\n\n---\n\n💬 Приятного чтения!\n\nКРИТИЧЕСКИЕ ТРЕБОВАНИЯ:\n1. **Название канала**: \n   - Используй channel_name как есть (названия уже обработаны)\n   - Формат: **[channel_name]** — [количество] пост(ов)\n2. **Описание постов**:\n   - Для статей (есть 📎 или \"Читать статью\") — опиши тему статьи\n   - Для мотивационных постов — передай главную мысль/совет\n   - Для новостных постов — укажи ключевые факты\n   - НЕ копируй текст дословно, перефразируй своими словами\n   - Длина: строго 1-2 предложения (максимум 30-40 слов)\n\n3. **Обработка \"Неизвестного канала\"**:\n   - Если видишь \"Неизвестный канал\" — это ошибка парсинга\n   - Посмотри на ссылку поста (link) и определи реальный канал\n   - Перенеси пост в правильный канал\n   - Если определить канал невозможно — пропусти этот пост\n\n4. **Ссылки**:\n   - Всегда включай ссылку на канал после названия\n   - Всегда включай ссылку на каждый пост\n   - Формат: 🔗 [URL без разрывов строк]\n\n5. **Сортировка**:\n   - Сначала каналы с наибольшим количеством постов\n   - Внутри канала — посты от новых к старым (по pub_date)\n\n6. **Стиль**:\n   - Пиши на русском языке\n   - Профессионально, но дружелюбно\n   - Без воды и общих фраз типа \"интересный пост\"\n   - Конкретика и суть\n\nПРИМЕРЫ ХОРОШИХ ОПИСАНИЙ:\n\n✅ \"Гайд по карьерному выбору для аналитиков L4: автор предлагает 4 блока вопросов для самоанализа — от визуализации будущего до конкретных первых шагов.\"\n\n✅ \"Техническая статья о выборе LLM-моделей и фреймворков для построения AI-агентов на PostgreSQL.\"\n\n✅ \"Объяснение Domain-Driven Design простым языком: как перейти от проектирования таблиц к моделированию бизнес-процессов.\"\n\n✅ \"История вируса CIH 1998 года, который уничтожал не только данные, но и BIOS материнских плат.\"\n\n❌ ПЛОХИЕ ПРИМЕРЫ:\n\"Интересный пост про карьеру\" (слишком общо)\n\"Автор делится мыслями о том, как важно думать о будущем\" (вода)\n\"Статья на Хабре про DDD\" (не раскрыта суть)\n\nОБРАБОТКА ДАННЫХ:\n1. Прочитай весь JSON\n2. Определи реальные каналы по ссылкам в постах\n3. Перегруппируй посты из \"Неизвестного канала\" в правильные каналы\n4. Отсортируй каналы по количеству постов\n5. Создай саммари\n6. Опиши каждый пост кратко и информативно\n\nТеперь обработай следующие данные и создай дайджест:\n{{ JSON.stringify($json) }}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        680,
+        -20
+      ],
+      "id": "edaf0d7b-3ffb-4120-9f01-0ff71446d842",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GigaChat/GigaChat-2-Max",
+          "mode": "list",
+          "cachedResultName": "GigaChat/GigaChat-2-Max"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        660,
+        140
+      ],
+      "id": "874b9d4e-a497-4a8a-8bd3-4026a496f9aa",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "e8eIcTzMn5uhsNvC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vgn45FJ24Yd1vgn85ABg3b1.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        -240
+      ],
+      "id": "d50c821d-858f-448c-986d-cc36ff152a33",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1,
+              "triggerAtMinute": 55
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -520,
+        -40
+      ],
+      "id": "2d33bac5-ecbd-4c92-ae54-f99b8cd95617",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vgn45FJ24Yd1vgn6S4oJH0l.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        -80
+      ],
+      "id": "6926f08a-80f9-43e5-a898-428324e353b1",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vgn45FJ24Yd1vgn5U8PWAc6.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        60
+      ],
+      "id": "3fbd1632-f525-43d6-b93f-a91ed683ec42",
+      "name": "RSS Read2"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        40,
+        -40
+      ],
+      "id": "585e6d17-5add-4535-aae6-e922f9925dc7",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "chatId": "-1003558274602",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        -20
+      ],
+      "id": "c3a36b59-f1ab-4320-bb4a-972fac1eb15d",
+      "name": "Telegram",
+      "webhookId": "eb924dfb-3f51-4ea1-a6b7-406f41595a2d",
+      "credentials": {
+        "telegramApi": {
+          "id": "zlFUBxfpJ8gOhLfg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Словарь красивых названий каналов\nconst channelNames = {\n  'school21sber': 'Школа 21',\n  'backend_baza': 'Backend База',\n  'habr_com': 'Хабр',\n  'bamrus': 'Бизнес-анализ & IT'\n};\n\n// Функция для форматирования даты\nfunction formatDate(dateString) {\n  if (!dateString) return new Date().toISOString().split('T')[0];\n  try {\n    const date = new Date(dateString);\n    return date.toISOString().split('T')[0]; // YYYY-MM-DD\n  } catch {\n    return new Date().toISOString().split('T')[0];\n  }\n}\n\n// Функция для форматирования даты и времени публикации\nfunction formatPubDate(dateString) {\n  if (!dateString) return new Date().toISOString().slice(0, 16).replace('T', ' ');\n  try {\n    const date = new Date(dateString);\n    return date.toISOString().slice(0, 16).replace('T', ' '); // YYYY-MM-DD HH:MM\n  } catch {\n    return new Date().toISOString().slice(0, 16).replace('T', ' ');\n  }\n}\n\n// Обработка входных данных\nconst items = $input.all();\nconst channelsMap = new Map();\nconst seenUrls = new Set();\n\n// Группируем по источникам (каналам)\nfor (const item of items) {\n  const data = item.json;\n  \n  const url = data.link || '';\n  const title = data.title || '';\n  // Используем contentSnippet - он уже без HTML\n  const description = data.contentSnippet || data.description || data.summary || '';\n  // Приоритет isoDate\n  const pubDate = data.isoDate || data.pubDate || data.published || data.date || '';\n  \n  // Извлекаем имя канала из ссылки t.me/channel_name\n  const sourceMatch = url.match(/t\\.me\\/([^\\/]+)/);\n  const source = sourceMatch ? sourceMatch[1] : 'Unknown';\n  \n  // Пропускаем дубликаты по URL\n  if (seenUrls.has(url) || !url) continue;\n  seenUrls.add(url);\n  \n  // Удаляем служебный текст от FetchRSS в конце описания\n  let cleanDescription = description\n    .replace(/\\(Feed generated with.*?\\)$/s, '')\n    .replace(/\\n{3,}/g, '\\n\\n') // Убираем лишние переносы строк\n    .trim();\n  \n  // Создаём или получаем канал с красивым названием\n  if (!channelsMap.has(source)) {\n    // Берём название из словаря или оставляем как есть\n    const displayName = channelNames[source] || source;\n    \n    channelsMap.set(source, {\n      channel_name: displayName,\n      channel_url: `https://t.me/${source}`,\n      posts: []\n    });\n  }\n  \n  // Добавляем пост в канал\n  channelsMap.get(source).posts.push({\n    title: title,\n    text: cleanDescription,\n    pub_date: formatPubDate(pubDate),\n    link: url\n  });\n}\n\n// Преобразуем Map в массив и сортируем посты по дате (новые первые)\nconst channels = Array.from(channelsMap.values());\nchannels.forEach(channel => {\n  channel.posts.sort((a, b) => {\n    const dateA = new Date(a.pub_date).getTime();\n    const dateB = new Date(b.pub_date).getTime();\n    return dateB - dateA;\n  });\n});\n\n// Считаем общее количество постов\nconst totalPosts = channels.reduce((sum, channel) => sum + channel.posts.length, 0);\n\n// Формируем итоговую структуру\nconst result = {\n  date: formatDate(new Date()),\n  channels: channels,\n  total_posts: totalPosts,\n  total_channels: channels.length\n};\n\n// Возвращаем в формате для AI\nreturn [{\n  json: result\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        -20
+      ],
+      "id": "3c41b686-26aa-482a-a805-80ad4575a24d",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;\n\nreturn items.filter(item => {\n  const data = item.json;\n  const dateField = data.isoDate || data.pubDate || data.published || data.date;\n  \n  if (!dateField) return false;\n  \n  try {\n    const postTime = new Date(dateField).getTime();\n    return !isNaN(postTime) && postTime >= twentyFourHoursAgo;\n  } catch {\n    return false;\n  }\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -20
+      ],
+      "id": "1dea7122-9873-451f-9199-046f60146151",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "url": "https://fetchrss.com/feed/1vgn45FJ24Yd1vgn50GEy9LA.rss",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -220,
+        200
+      ],
+      "id": "97a2855e-3091-4004-8b93-5894b627d59c",
+      "name": "RSS Read3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ef181915-a134-4e9b-b7f7-c2fb4da5a903",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bb27eea2d6e6bda0d55b7ceddc9c371dd4c532bdd984c16936b18342a7cda51c"
+  },
+  "id": "3HLuibLOYbO4f699",
+  "tags": []
+}

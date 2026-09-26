@@ -1,0 +1,241 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2ddf49df-c61c-42e5-a7ad-505ceb752357",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "formatDate",
+        "date": "={{ $today.minus({ days: 7 })}}",
+        "format": "yyyy-MM-dd",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "bd56c9fa-053f-4357-9911-d95042424cf1",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "url": "https://api.hh.ru/vacancies",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={ \"text\" : \"backend Go разработчик\",\n  \"search_field\" : [\"name\"],\n  \"area\" : 1,\n  \"date_from\" : \"{{ $json.formattedDate }}T00:00:00\",\n  \"per_page\" : 3,\n  \"order_by\" : \"publication_time\",\n  \"experience\" : \"noExperience\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "4faae1a0-d0bf-4aab-956f-509d0e625df2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        700,
+        0
+      ],
+      "id": "c3945d48-f386-46c6-8c1c-a58e606e5f71",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Извлекаем информацию о вакансиях и объединяем для анализа ВСЕХ сразу\nconst vacanciesData = [];\nlet allVacanciesCombined = '';\n\n// Проверяем, что пришли данные\nif (!Array.isArray(items) || items.length === 0) {\n  return [{\n    json: {\n      error: \"Нет данных для обработки\",\n      all_vacancies_combined: \"\",\n      total_vacancies_count: 0,\n      current_date: new Date().toLocaleDateString('ru-RU')\n    }\n  }];\n}\n\n// Обрабатываем входные данные\nconst inputData = Array.isArray(items[0].json) ? items[0].json : items.map(item => item.json);\n\nfor (let i = 0; i < inputData.length; i++) {\n  const vacancy = inputData[i];\n  \n  // Извлекаем все доступные данные\n  const vacancyInfo = {\n    id: vacancy.id,\n    name: vacancy.name,\n    requirement_text: vacancy.snippet?.requirement || '',\n    responsibility_text: vacancy.snippet?.responsibility || '',\n    key_skills: vacancy.key_skills || [],\n    professional_roles: vacancy.professional_roles?.map(role => role.name) || [],\n    experience: vacancy.experience?.name || '',\n    schedule: vacancy.schedule?.name || '',\n    employer_name: vacancy.employer?.name || '',\n    published_at: vacancy.published_at || '',\n    full_description_url: vacancy.url || ''\n  };\n  \n  // Очищаем HTML теги\n  vacancyInfo.requirement_clean = vacancyInfo.requirement_text\n    .replace(/<[^>]*>/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n    \n  vacancyInfo.responsibility_clean = vacancyInfo.responsibility_text\n    .replace(/<[^>]*>/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n  \n  // Объединяем все тексты для отдельной вакансии\n  vacancyInfo.combined_text_for_ai = `\n    Должность: ${vacancyInfo.name}\n    Требования: ${vacancyInfo.requirement_clean}\n    Обязанности: ${vacancyInfo.responsibility_clean}\n    ${vacancyInfo.key_skills.length > 0 ? 'Ключевые навыки: ' + vacancyInfo.key_skills.map(skill => typeof skill === 'object' ? skill.name : skill).join(', ') : ''}\n    Опыт: ${vacancyInfo.experience}\n    Специализация: ${vacancyInfo.professional_roles.join(', ')}\n  `.trim();\n  \n  // Добавляем вакансию к общему тексту (ВСЕ вакансии вместе)\n  allVacanciesCombined += `=== ВАКАНСИЯ ${i + 1} ===\nНазвание: ${vacancyInfo.name}\nТребования: ${vacancyInfo.requirement_clean}\nОбязанности: ${vacancyInfo.responsibility_clean}\n${vacancyInfo.key_skills.length > 0 ? 'Ключевые навыки: ' + vacancyInfo.key_skills.map(skill => typeof skill === 'object' ? skill.name : skill).join(', ') : ''}\nОпыт: ${vacancyInfo.experience}\nСпециализация: ${vacancyInfo.professional_roles.join(', ')}\nРаботодатель: ${vacancyInfo.employer_name}\n\n`;\n  \n  vacanciesData.push(vacancyInfo);\n}\n\n// Возвращаем данные для GigaChat\nreturn [{\n  json: {\n    // Для анализа ВСЕХ вакансий сразу\n    all_vacancies_combined: allVacanciesCombined.trim(),\n    total_vacancies_count: vacanciesData.length,\n    current_date: new Date().toLocaleDateString('ru-RU'),\n    \n    // Для отладки/проверки\n    debug_info: {\n      vacancies_processed: vacanciesData.length,\n      sample_vacancy_name: vacanciesData[0]?.name || 'нет',\n      combined_text_length: allVacanciesCombined.length\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ],
+      "id": "6a54abae-73f1-4195-98aa-8b7dd0f4d82e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты - аналитик рынка труда. Проанализируй следующие  вакансии и составь еженедельный дайджест с топ-15 самых частых требований.\n\nВАКАНСИИ ДЛЯ АНАЛИЗА:\n\n{{ JSON.stringify($json) }}\n\nТВОЯ ЗАДАЧА:\n1. Извлеки ВСЕ технические навыки из каждой вакансии\n2. Посчитай, сколько раз каждый навык встречается (частотность)\n3. Приведи навыки к нормализованному виду:\n   - go/golang/Go -> golang\n   - python/питон/Python -> python\n   - php/PHP -> php\n   - javascript/js/JS/JavaScript -> javascript\n   - backend/Backend/бэкенд -> backend\n   - frontend/Frontend/фронтенд -> frontend\n   - docker/Docker -> docker\n   - git/Git -> git\n   - api/API -> api\n4. Создай топ-15 самых популярных навыков по убыванию частоты. Если навыков меньше 15 - выведи только реальные, не добавляй пустые строки и не придумывай новые.\n\nВЫВЕДИ РЕЗУЛЬТАТ В ТОЧНОМ ФОРМАТЕ:\n\n📊 ЕЖЕНЕДЕЛЬНЫЙ ДАЙДЖЕСТ ВАКАНСИЙ\nДата: [сегодняшняя дата]\n\nНа этой неделе я спарсил <количество> свежих вакансий по направлению Backend-разработка (Golang/Python). \n\nСАМЫЕ ПОПУЛЯРНЫЕ ТРЕБОВАНИЯ:\n\n1. [навык 1]: [количество] раз\n2. [назык 2]: [количество] раз\n3. [навык 3]: [количество] раз\n4. [навык 4]: [количество] раз\n5. [навык 5]: [количество] раз\n6. [навык 6]: [количество] раз\n7. [навык 7]: [количество] раз\n8. [навык 8]: [количество] раз\n9. [навык 9]: [количество] раз\n10. [навык 10]: [количество] раз\n11. [навык 11]: [количество] раз\n12. [навык 12]: [количество] раз\n13. [навык 13]: [количество] раз\n14. [навык 14]: [количество] раз\n15. [навык 15]: [количество] раз\n\nСледующий отчет через неделю!\n\nВАЖНЫЕ ПРАВИЛА:\n1. Извлекай только конкретные технические навыки\n2. Игнорируй мягкие навыки (коммуникабельность, ответственность)\n3. Игнорируй общие фразы (опыт работы, высшее образование)\n4. Если навык встречается в названии вакансии - считай его\n5. Считай все упоминания навыка в тексте\n6. В выводе ДОЛЖНО быть ровно 15 пунктов, даже если навыков меньше\n7. Формат вывода должен быть ТОЧНО как указано выше\n8. Не добавляй ничего кроме указанного формата\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "3cef7518-4bd7-422b-a3be-c49dd1b29c4b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "GigaChat/GigaChat-2-Max",
+          "mode": "list",
+          "cachedResultName": "GigaChat/GigaChat-2-Max"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1160,
+        220
+      ],
+      "id": "fcaa67ba-35e1-4a76-8302-e50d97ac57f0",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "e8eIcTzMn5uhsNvC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "-1003558274602",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1480,
+        0
+      ],
+      "id": "f5c579d7-75ff-4921-853a-f7a0d1e1d5a6",
+      "name": "Telegram",
+      "webhookId": "e121e74a-c3f3-41d3-8d24-5377f39a411d",
+      "credentials": {
+        "telegramApi": {
+          "id": "zlFUBxfpJ8gOhLfg",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "753dae4a-3de5-436e-b752-f53a3ea9ab63",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bb27eea2d6e6bda0d55b7ceddc9c371dd4c532bdd984c16936b18342a7cda51c"
+  },
+  "id": "guUhIRblq7ImxI6q",
+  "tags": []
+}
